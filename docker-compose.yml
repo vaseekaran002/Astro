@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  database:
+    container_name: astromon_database
+    image: "postgres:latest"
+    restart: always
+    ports:
+      - "5432:5432"
+    networks:
+      - shared-network
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  service:
+    container_name: astromon_service
+    restart: unless-stopped
+    image: astromon-service:1.0.0
+    build:
+      context: service
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - shared-network
+    depends_on:
+      - database
+
+  client:
+    container_name: astromon_client
+    restart: unless-stopped
+    image: astromon-client:1.0.0
+    build:
+      context: client
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - shared-network
+    depends_on:
+      - service
+
+volumes:
+  db-data:
+
+networks:
+  shared-network:
